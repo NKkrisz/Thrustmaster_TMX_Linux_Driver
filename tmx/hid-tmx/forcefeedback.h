@@ -1,20 +1,20 @@
-#define T150_FF_BLIND_COMPUTE_EFFECT		false
-#define T150_FF_BLIND_UPLOAD			false
+#define TMX_FF_BLIND_COMPUTE_EFFECT		false
+#define TMX_FF_BLIND_UPLOAD			false
 
-#define T150_FF_FIRST_CODE_CONSTANT		0x02
-#define T150_FF_FIRST_CODE_PERIODIC		0x02
-#define T150_FF_FIRST_CODE_CONDITION		0x05
+#define TMX_FF_FIRST_CODE_CONSTANT		0x02
+#define TMX_FF_FIRST_CODE_PERIODIC		0x02
+#define TMX_FF_FIRST_CODE_CONDITION		0x05
 
-#define T150_FF_UPDATE_CODE_CONSTANT		0x03
-#define T150_FF_UPDATE_CODE_PERIODIC		0x04
-#define T150_FF_UPDATE_CODE_CONDITION		0x05
+#define TMX_FF_UPDATE_CODE_CONSTANT		0x03
+#define TMX_FF_UPDATE_CODE_PERIODIC		0x04
+#define TMX_FF_UPDATE_CODE_CONDITION		0x05
 
-#define T150_FF_COMMIT_CODE_CONSTANT		0x4000
-#define T150_FF_COMMIT_CODE_SINE		0x4022
-#define T150_FF_COMMIT_CODE_SAW_UP		0x4023
-#define T150_FF_COMMIT_CODE_SAW_DOWN		0x4024
-#define T150_FF_COMMIT_CODE_SPRING		0x4040
-#define T150_FF_COMMIT_CODE_DAMPER		0x4041
+#define TMX_FF_COMMIT_CODE_CONSTANT		0x4000
+#define TMX_FF_COMMIT_CODE_SINE		0x4022
+#define TMX_FF_COMMIT_CODE_SAW_UP		0x4023
+#define TMX_FF_COMMIT_CODE_SAW_DOWN		0x4024
+#define TMX_FF_COMMIT_CODE_SPRING		0x4040
+#define TMX_FF_COMMIT_CODE_DAMPER		0x4041
 
 
 struct __packed ff_periodic
@@ -149,16 +149,16 @@ union __packed ff_change
 	struct ff_change_gain gain;
 };
 
-static int t150_init_ffb(struct t150 *t150);
-static void t150_free_ffb(struct t150 *t150);
+static int tmx_init_ffb(struct tmx *tmx);
+static void tmx_free_ffb(struct tmx *tmx);
 
-static int t150_ff_upload(struct input_dev *dev, struct ff_effect *effect, struct ff_effect *old);
-static int t150_ff_erase(struct input_dev *dev, int effect_id);
-static int t150_ff_play(struct input_dev *dev, int effect_id, int value);
-static void t150_ff_set_gain(struct input_dev *dev, uint16_t gain);
+static int tmx_ff_upload(struct input_dev *dev, struct ff_effect *effect, struct ff_effect *old);
+static int tmx_ff_erase(struct input_dev *dev, int effect_id);
+static int tmx_ff_play(struct input_dev *dev, int effect_id, int value);
+static void tmx_ff_set_gain(struct input_dev *dev, uint16_t gain);
 
-static uint8_t t150_ffb_effects_length = 8;
-static const int16_t t150_ffb_effects[] = {
+static uint8_t tmx_ffb_effects_length = 8;
+static const int16_t tmx_ffb_effects[] = {
 	FF_GAIN,
 
 	FF_PERIODIC,

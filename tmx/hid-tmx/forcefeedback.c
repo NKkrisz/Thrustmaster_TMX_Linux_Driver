@@ -1,18 +1,18 @@
 /** Callback to free urb when a ffb request is completed */
-static void t150_ff_free_urb(struct urb *urb) 
+static void tmx_ff_free_urb(struct urb *urb) 
 {
-	//struct t150 *t150 = urb->context;
+	//struct tmx *tmx = urb->context;
 	kfree(urb->transfer_buffer);
 	usb_free_urb(urb);
 }
 
 /**
  * Creates an usb URB to be sent to wheel for ffb operations
- * @param t150 our wheel
+ * @param tmx the wheel
  * @param buffer_size how large alloc the urb
  * @returns a ptr to URB if no error, 0 otherwise
  */
-static struct urb* t150_ff_alloc_urb(struct t150 *t150, const size_t buffer_size)
+static struct urb* tmx_ff_alloc_urb(struct tmx *tmx, const size_t buffer_size)
 {
 	struct urb *urb;
 
@@ -28,13 +28,13 @@ static struct urb* t150_ff_alloc_urb(struct t150 *t150, const size_t buffer_size
 
 	usb_fill_int_urb(
 		urb,
-		t150->usb_device,
-		t150->pipe_out,
+		tmx->usb_device,
+		tmx->pipe_out,
 		buffer,
 		buffer_size,
 		donothing_callback,
-		t150,
-		t150->bInterval_out
+		tmx,
+		tmx->bInterval_out
 	); 
 
 	return urb;
@@ -43,28 +43,28 @@ static struct urb* t150_ff_alloc_urb(struct t150 *t150, const size_t buffer_size
 /** 
  * This macro is called in the probe function when the wheel input
  * is beign setted up
- * @param t150 a pointer to our wheel
+ * @param tmx a pointer to the wheel
  * @returns 0 if no error, less than 0 if an error occured. 
  */
-static inline int t150_init_ffb(struct t150 *t150)
+static inline int tmx_init_ffb(struct tmx *tmx)
 {
 	int errno, i;
 
-	for (i = 0; i < t150_ffb_effects_length; i++)
-		set_bit(t150_ffb_effects[i], t150->joystick->ffbit);
+	for (i = 0; i < tmx_ffb_effects_length; i++)
+		set_bit(tmx_ffb_effects[i], tmx->joystick->ffbit);
 
 	// input core will automatically free force feedback structures when device is destroyed.
-	errno = input_ff_create(t150->joystick, FF_MAX_EFFECTS);
+	errno = input_ff_create(tmx->joystick, FF_MAX_EFFECTS);
 	
 	if(errno) {
-		hid_err(t150->hid_device, "error create ff :(. errno=%i\n", errno);
+		hid_err(tmx->hid_device, "error create ff :(. errno=%i\n", errno);
 		return errno;
 	}
 
-	t150->joystick->ff->upload = t150_ff_upload;
-	t150->joystick->ff->erase = t150_ff_erase;
-	t150->joystick->ff->playback = t150_ff_play;
-	t150->joystick->ff->set_gain = t150_ff_set_gain;
+	tmx->joystick->ff->upload = tmx_ff_upload;
+	tmx->joystick->ff->erase = tmx_ff_erase;
+	tmx->joystick->ff->playback = tmx_ff_play;
+	tmx->joystick->ff->set_gain = tmx_ff_set_gain;
 
 	return 0;
 }
@@ -72,40 +72,40 @@ static inline int t150_init_ffb(struct t150 *t150)
 /**
  * macro to clean up the ffb stuff of a whell. It's to be called
  * when probe failed to init or when the wheel is disconnected
- * @param t150 a pointer to our wheel
+ * @param tmx a pointer to the wheel
  */
-static inline void t150_free_ffb(struct t150 *t150)
+static inline void tmx_free_ffb(struct tmx *tmx)
 {
 	unsigned int i, j;
 
 	for(i = 0; i < FF_MAX_EFFECTS; i++)
 		for(j = 0; j < 3; j++) {
-			if(! t150->update_ffb_urbs[i][j])
+			if(! tmx->update_ffb_urbs[i][j])
 				continue;
 
-			usb_kill_urb(t150->update_ffb_urbs[i][j]);
-			kfree(t150->update_ffb_urbs[i][j]->transfer_buffer);
-			usb_free_urb(t150->update_ffb_urbs[i][j]);
+			usb_kill_urb(tmx->update_ffb_urbs[i][j]);
+			kfree(tmx->update_ffb_urbs[i][j]->transfer_buffer);
+			usb_free_urb(tmx->update_ffb_urbs[i][j]);
 		}
 }
 
-static void t150_ff_preapre_first(struct ff_first *ff_first, struct ff_effect *effect)
+static void tmx_ff_preapre_first(struct ff_first *ff_first, struct ff_effect *effect)
 {
 	struct ff_envelope *ff_envelope;
 
 	switch (effect->type) {
 	case FF_CONSTANT:
 		ff_envelope = &effect->u.constant.envelope;
-		ff_first->f0 = T150_FF_FIRST_CODE_CONSTANT;
+		ff_first->f0 = TMX_FF_FIRST_CODE_CONSTANT;
 		break;
 	case FF_PERIODIC:
 		ff_envelope = &effect->u.periodic.envelope;
-		ff_first->f0 = T150_FF_FIRST_CODE_PERIODIC;
+		ff_first->f0 = TMX_FF_FIRST_CODE_PERIODIC;
 		break;
 	case FF_DAMPER:
 	case FF_SPRING:
 		ff_envelope = 0;
-		ff_first->f0 = T150_FF_FIRST_CODE_CONDITION;
+		ff_first->f0 = TMX_FF_FIRST_CODE_CONDITION;
 		break;
 	default:
 		ff_envelope = 0;
@@ -133,7 +133,7 @@ static void t150_ff_preapre_first(struct ff_first *ff_first, struct ff_effect *e
  * @param ff_update the usb packed data to prepare
  * @param effect the effect to be updated
  */
-static void t150_ff_prepare_update(struct ff_update *ff_update, struct ff_effect *effect)
+static void tmx_ff_prepare_update(struct ff_update *ff_update, struct ff_effect *effect)
 {
 	int32_t level = 0;
 
@@ -143,7 +143,7 @@ static void t150_ff_prepare_update(struct ff_update *ff_update, struct ff_effect
 	switch (effect->type) {
 	case FF_PERIODIC:
 	default:
-		ff_update->effect_class = T150_FF_UPDATE_CODE_PERIODIC;
+		ff_update->effect_class = TMX_FF_UPDATE_CODE_PERIODIC;
 
 		ff_update->effect.periodic.magnitude = word_high(effect->u.periodic.magnitude);
 		ff_update->effect.periodic.offset = word_high(effect->u.periodic.offset);
@@ -151,7 +151,7 @@ static void t150_ff_prepare_update(struct ff_update *ff_update, struct ff_effect
 		ff_update->effect.periodic.period = cpu_to_le16(effect->u.periodic.period);
 		break;
 	case FF_CONSTANT:
-		ff_update->effect_class = T150_FF_UPDATE_CODE_CONSTANT;
+		ff_update->effect_class = TMX_FF_UPDATE_CODE_CONSTANT;
 
 		/* Not sure if really necessary. Done only for the ffmvforce utility :P */
 		level = effect->u.constant.level * fixp_sin16(effect->direction / ( 0xFFFF / 360 )) * +1;
@@ -160,7 +160,7 @@ static void t150_ff_prepare_update(struct ff_update *ff_update, struct ff_effect
 		ff_update->effect.constant.level = (level / 0x01ff);
 		break;
 	case FF_SPRING:
-		ff_update->effect_class = T150_FF_UPDATE_CODE_CONDITION;
+		ff_update->effect_class = TMX_FF_UPDATE_CODE_CONDITION;
 
 		ff_update->effect.condition.right_coeff = effect->u.condition[0].right_coeff / 0x147;
 		ff_update->effect.condition.left_coeff = effect->u.condition[0].left_coeff / 0x147;
@@ -176,7 +176,7 @@ static void t150_ff_prepare_update(struct ff_update *ff_update, struct ff_effect
 		ff_update->effect.condition.left_sat = effect->u.condition[0].left_saturation / 0x030c;
 		break;
 	case FF_DAMPER:
-		ff_update->effect_class = T150_FF_UPDATE_CODE_CONDITION;
+		ff_update->effect_class = TMX_FF_UPDATE_CODE_CONDITION;
 
 		ff_update->effect.condition.right_coeff = effect->u.condition[0].right_coeff / 0x147;
 		ff_update->effect.condition.left_coeff = effect->u.condition[0].left_coeff / 0x147;
@@ -195,7 +195,7 @@ static void t150_ff_prepare_update(struct ff_update *ff_update, struct ff_effect
 	}
 }
 
-static void t150_ff_prepare_commit(struct ff_commit *ff_commit, struct ff_effect *effect)
+static void tmx_ff_prepare_commit(struct ff_commit *ff_commit, struct ff_effect *effect)
 {
 	ff_commit->f0 = 0x01;
 	ff_commit->id = effect->id;
@@ -217,27 +217,27 @@ static void t150_ff_prepare_commit(struct ff_commit *ff_commit, struct ff_effect
 		switch (effect->u.periodic.waveform) {
 		case FF_SINE:
 		default:
-			ff_commit->effect_type = cpu_to_le16(T150_FF_COMMIT_CODE_SINE);
+			ff_commit->effect_type = cpu_to_le16(TMX_FF_COMMIT_CODE_SINE);
 			break;
 		case FF_SAW_UP:
-			ff_commit->effect_type = cpu_to_le16(T150_FF_COMMIT_CODE_SAW_UP);
+			ff_commit->effect_type = cpu_to_le16(TMX_FF_COMMIT_CODE_SAW_UP);
 			break;
 		case FF_SAW_DOWN:
-			ff_commit->effect_type = cpu_to_le16(T150_FF_COMMIT_CODE_SAW_DOWN);
+			ff_commit->effect_type = cpu_to_le16(TMX_FF_COMMIT_CODE_SAW_DOWN);
 			break;
 		}
 		break;
 	case FF_CONSTANT:
-		ff_commit->effect_type = cpu_to_le16(T150_FF_COMMIT_CODE_CONSTANT);
+		ff_commit->effect_type = cpu_to_le16(TMX_FF_COMMIT_CODE_CONSTANT);
 		break;
 	case FF_SPRING:
-		ff_commit->effect_type = cpu_to_le16(T150_FF_COMMIT_CODE_SPRING);
+		ff_commit->effect_type = cpu_to_le16(TMX_FF_COMMIT_CODE_SPRING);
 		break;
 	case FF_DAMPER:
-		ff_commit->effect_type = cpu_to_le16(T150_FF_COMMIT_CODE_DAMPER);
+		ff_commit->effect_type = cpu_to_le16(TMX_FF_COMMIT_CODE_DAMPER);
 		break;
 	default:
-		printk(KERN_ERR "t150: unknown effect type: %i\n", effect->type);
+		printk(KERN_ERR "tmx: unknown effect type: %i\n", effect->type);
 	}
 }
 
@@ -250,9 +250,9 @@ static void t150_ff_prepare_commit(struct ff_commit *ff_commit, struct ff_effect
  * 
  * @return 0 if no errors occured
  */
-static int t150_ff_upload(struct input_dev *dev, struct ff_effect *effect, struct ff_effect *old)
+static int tmx_ff_upload(struct input_dev *dev, struct ff_effect *effect, struct ff_effect *old)
 {
-	struct t150 *t150 = input_get_drvdata(dev);
+	struct tmx *tmx = input_get_drvdata(dev);
 	int errno = 0;
 
 	struct ff_first ff_first_old, ff_first_new;
@@ -260,85 +260,85 @@ static int t150_ff_upload(struct input_dev *dev, struct ff_effect *effect, struc
 	struct ff_commit ff_commit_old, ff_commit_new;
 
 	// No need to re-upload the same effect....
-	if(!T150_FF_BLIND_COMPUTE_EFFECT && old && memcmp(effect, old, sizeof(struct ff_effect)) == 0)
+	if(!TMX_FF_BLIND_COMPUTE_EFFECT && old && memcmp(effect, old, sizeof(struct ff_effect)) == 0)
 		return 0;
 
 	// If URBs were already allocated we can re-use them....
 	// Alloc first urb
-	if(! t150->update_ffb_urbs[effect->id][0])
-		t150->update_ffb_urbs[effect->id][0] = t150_ff_alloc_urb(t150, sizeof(struct ff_first));
+	if(! tmx->update_ffb_urbs[effect->id][0])
+		tmx->update_ffb_urbs[effect->id][0] = tmx_ff_alloc_urb(tmx, sizeof(struct ff_first));
 
-	if(! t150->update_ffb_urbs[effect->id][0])
+	if(! tmx->update_ffb_urbs[effect->id][0])
 		return -ENOMEM;
 
 	// Alloc second urb
-	if(! t150->update_ffb_urbs[effect->id][1])
-		t150->update_ffb_urbs[effect->id][1] = t150_ff_alloc_urb(t150, sizeof(struct ff_update));
+	if(! tmx->update_ffb_urbs[effect->id][1])
+		tmx->update_ffb_urbs[effect->id][1] = tmx_ff_alloc_urb(tmx, sizeof(struct ff_update));
 
-	if(! t150->update_ffb_urbs[effect->id][1])
+	if(! tmx->update_ffb_urbs[effect->id][1])
 		goto free0;
 
 	// Alloc third urb
-	if(! t150->update_ffb_urbs[effect->id][2])
-		t150->update_ffb_urbs[effect->id][2] = t150_ff_alloc_urb(t150, sizeof(struct ff_commit));
+	if(! tmx->update_ffb_urbs[effect->id][2])
+		tmx->update_ffb_urbs[effect->id][2] = tmx_ff_alloc_urb(tmx, sizeof(struct ff_commit));
 
-	if(! t150->update_ffb_urbs[effect->id][2])
+	if(! tmx->update_ffb_urbs[effect->id][2])
 		goto free1;	
 
 	/** Preparing effect */
-	t150_ff_preapre_first(&ff_first_new, effect);
-	t150_ff_prepare_update(&ff_update_new, effect);
-	t150_ff_prepare_commit(&ff_commit_new, effect);
+	tmx_ff_preapre_first(&ff_first_new, effect);
+	tmx_ff_prepare_update(&ff_update_new, effect);
+	tmx_ff_prepare_commit(&ff_commit_new, effect);
 
 	if(old) {
-		t150_ff_preapre_first(&ff_first_old, old);
-		t150_ff_prepare_update(&ff_update_old, old);
-		t150_ff_prepare_commit(&ff_commit_old, old);
+		tmx_ff_preapre_first(&ff_first_old, old);
+		tmx_ff_prepare_update(&ff_update_old, old);
+		tmx_ff_prepare_commit(&ff_commit_old, old);
 	}
 	
 	/** Submiting the effect to the wheel 
 	 * If an old is present and the result packet are the same we skip an URB
-	 * unless you define T150_FF_BLIND_UPLOAD as true
+	 * unless you define TMX_FF_BLIND_UPLOAD as true
 	 */
-	if(T150_FF_BLIND_UPLOAD || !old || memcmp(&ff_first_old, &ff_first_new, sizeof(struct ff_first))){
-		usb_kill_urb(t150->update_ffb_urbs[effect->id][0]);
+	if(TMX_FF_BLIND_UPLOAD || !old || memcmp(&ff_first_old, &ff_first_new, sizeof(struct ff_first))){
+		usb_kill_urb(tmx->update_ffb_urbs[effect->id][0]);
 
-		memcpy(t150->update_ffb_urbs[effect->id][0]->transfer_buffer, &ff_first_new, sizeof(struct ff_first));
-		errno = usb_submit_urb(t150->update_ffb_urbs[effect->id][0], GFP_ATOMIC);
+		memcpy(tmx->update_ffb_urbs[effect->id][0]->transfer_buffer, &ff_first_new, sizeof(struct ff_first));
+		errno = usb_submit_urb(tmx->update_ffb_urbs[effect->id][0], GFP_ATOMIC);
 		if(errno) {
-			hid_err(t150->hid_device, "submitting ffb 0 urb of effect %d, error %d\n", effect->id ,errno);
+			hid_err(tmx->hid_device, "submitting ffb 0 urb of effect %d, error %d\n", effect->id ,errno);
 			return errno;
 		}
 	}
 
-	if(T150_FF_BLIND_UPLOAD || !old || memcmp(&ff_update_old, &ff_update_new, sizeof(struct ff_update))){
-		usb_kill_urb(t150->update_ffb_urbs[effect->id][1]);
+	if(TMX_FF_BLIND_UPLOAD || !old || memcmp(&ff_update_old, &ff_update_new, sizeof(struct ff_update))){
+		usb_kill_urb(tmx->update_ffb_urbs[effect->id][1]);
 
-		memcpy(t150->update_ffb_urbs[effect->id][1]->transfer_buffer, &ff_update_new, sizeof(struct ff_update));
-		errno = usb_submit_urb(t150->update_ffb_urbs[effect->id][1], GFP_ATOMIC);
+		memcpy(tmx->update_ffb_urbs[effect->id][1]->transfer_buffer, &ff_update_new, sizeof(struct ff_update));
+		errno = usb_submit_urb(tmx->update_ffb_urbs[effect->id][1], GFP_ATOMIC);
 		if(errno) {
-			hid_err(t150->hid_device, "submitting ffb 1 urb of effect %d, error %d\n", effect->id ,errno);
+			hid_err(tmx->hid_device, "submitting ffb 1 urb of effect %d, error %d\n", effect->id ,errno);
 			return errno;
 		}
 	}
 
-	if(T150_FF_BLIND_UPLOAD || !old || memcmp(&ff_commit_old, &ff_commit_new, sizeof(struct ff_commit))){
-		usb_kill_urb(t150->update_ffb_urbs[effect->id][2]);
+	if(TMX_FF_BLIND_UPLOAD || !old || memcmp(&ff_commit_old, &ff_commit_new, sizeof(struct ff_commit))){
+		usb_kill_urb(tmx->update_ffb_urbs[effect->id][2]);
 
-		memcpy(t150->update_ffb_urbs[effect->id][2]->transfer_buffer, &ff_commit_new, sizeof(struct ff_commit));
-		errno = usb_submit_urb(t150->update_ffb_urbs[effect->id][2], GFP_ATOMIC);
+		memcpy(tmx->update_ffb_urbs[effect->id][2]->transfer_buffer, &ff_commit_new, sizeof(struct ff_commit));
+		errno = usb_submit_urb(tmx->update_ffb_urbs[effect->id][2], GFP_ATOMIC);
 		if(errno) {
-			hid_err(t150->hid_device, "submitting ffb 2 urb of effect %d, error %d\n", effect->id ,errno);
+			hid_err(tmx->hid_device, "submitting ffb 2 urb of effect %d, error %d\n", effect->id ,errno);
 			return errno;
 		}
 	}
 
 	return 0;
 
-free1:	t150_ff_free_urb(t150->update_ffb_urbs[effect->id][1]);
-	t150->update_ffb_urbs[effect->id][1] = 0;
-free0:	t150_ff_free_urb(t150->update_ffb_urbs[effect->id][0]);
-	t150->update_ffb_urbs[effect->id][0] = 0;
+free1:	tmx_ff_free_urb(tmx->update_ffb_urbs[effect->id][1]);
+	tmx->update_ffb_urbs[effect->id][1] = 0;
+free0:	tmx_ff_free_urb(tmx->update_ffb_urbs[effect->id][0]);
+	tmx->update_ffb_urbs[effect->id][0] = 0;
 	return -ENOMEM;
 }
 
@@ -349,10 +349,10 @@ free0:	t150_ff_free_urb(t150->update_ffb_urbs[effect->id][0]);
  * 
  * @return 0 if no errors occured
  */
-static int t150_ff_erase(struct input_dev *dev, int effect_id)
+static int tmx_ff_erase(struct input_dev *dev, int effect_id)
 {
 	/** When an effect is destroyed also a request to stop it is sent to 
-	 * t150_ff_play. Observing the Windows's driver seems there isn't any
+	 * tmx_ff_play. Observing the Windows's driver seems there isn't any
 	 * specific packet to explicity destory the effect, so we return success (0)
 	 * to notify the Kernel that the id can be freed and re-used for another
 	 * effect. 
@@ -371,15 +371,15 @@ static int t150_ff_erase(struct input_dev *dev, int effect_id)
  * 
  * @return 0 if no errors occured
  */
-static int t150_ff_play(struct input_dev *dev, int effect_id, int times)
+static int tmx_ff_play(struct input_dev *dev, int effect_id, int times)
 {
-	struct t150 *t150 = input_get_drvdata(dev);
+	struct tmx *tmx = input_get_drvdata(dev);
 	struct urb *urb;
 	struct ff_change_effect_status *ff_change;
 	int errno;
 
 	// Alloc urb
-	urb = t150_ff_alloc_urb(t150, sizeof(struct ff_change_effect_status));
+	urb = tmx_ff_alloc_urb(tmx, sizeof(struct ff_change_effect_status));
 	if(!urb)
 		return -ENOMEM;
 	ff_change = urb->transfer_buffer;
@@ -389,10 +389,10 @@ static int t150_ff_play(struct input_dev *dev, int effect_id, int times)
 	ff_change->mode = times ? 0x41 : 0x00; // Play or stop ?
 	ff_change->times = times ? times : 0x01;
 
-	urb->complete = t150_ff_free_urb;
+	urb->complete = tmx_ff_free_urb;
 	errno = usb_submit_urb(urb, GFP_KERNEL);
 	if(errno)
-		hid_err(t150->hid_device, "unable to send URB to play effect n %d, errno %d\n", effect_id ,errno);
+		hid_err(tmx->hid_device, "unable to send URB to play effect n %d, errno %d\n", effect_id ,errno);
 
 	return errno;
 }
@@ -401,15 +401,15 @@ static int t150_ff_play(struct input_dev *dev, int effect_id, int times)
  * @param dev
  * @param gain 0xFFFF = 100% of gain 
  */
-static void t150_ff_set_gain(struct input_dev *dev, uint16_t gain)
+static void tmx_ff_set_gain(struct input_dev *dev, uint16_t gain)
 {
-	struct t150 *t150 = input_get_drvdata(dev);
+	struct tmx *tmx = input_get_drvdata(dev);
 	int errno;
 	struct urb *urb;
 	struct ff_change_gain *ff_change;
 	unsigned long flags;
 
-	urb = t150_ff_alloc_urb(t150, sizeof(struct ff_change_gain));
+	urb = tmx_ff_alloc_urb(tmx, sizeof(struct ff_change_gain));
 	if(!urb)
 		return; // -NOMEM
 
@@ -418,12 +418,12 @@ static void t150_ff_set_gain(struct input_dev *dev, uint16_t gain)
 	ff_change->f0 = 0x43;
 	ff_change->gain = DIV_ROUND_CLOSEST(gain, 0x1ff);
 
-	spin_lock_irqsave(&t150->settings.access_lock, flags);
-	t150->settings.gain = ff_change->gain;
-	spin_unlock_irqrestore(&t150->settings.access_lock, flags);
+	spin_lock_irqsave(&tmx->settings.access_lock, flags);
+	tmx->settings.gain = ff_change->gain;
+	spin_unlock_irqrestore(&tmx->settings.access_lock, flags);
 
-	urb->complete = t150_ff_free_urb;
+	urb->complete = tmx_ff_free_urb;
 	errno = usb_submit_urb(urb, GFP_KERNEL);
 	if(errno)
-		hid_err(t150->hid_device, "unable to send URB to set gain, errno %i\n", errno);
+		hid_err(tmx->hid_device, "unable to send URB to set gain, errno %i\n", errno);
 }
