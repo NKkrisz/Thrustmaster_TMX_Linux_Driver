@@ -1,6 +1,6 @@
-build/*
+t*/build/*
 .vscode
 .idea
-traffic/sniffer
-traffic/sender
-traffic/tests
+t*/traffic/sniffer
+t*/traffic/sender
+t*/traffic/tests
