@@ -84,7 +84,9 @@ t150()
 
 	echo "==== LOADING NEW MODULES ===="
 	modprobe hid-tminit
+	echo "hid-tminit"
 	modprobe hid-t150
+	echo "hid-t150"
 
 	cd ..
 }
