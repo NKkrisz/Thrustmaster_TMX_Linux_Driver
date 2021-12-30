@@ -1,4 +1,4 @@
-obj-m += hid-t150.o
+obj-m += hid-tmx.o
 KDIR ?= /lib/modules/$(shell uname -r)/build
 
 all:
