@@ -114,6 +114,7 @@ static ssize_t tmx_store_range(struct device *dev, struct device_attribute *attr
 
 	if(range < 270)
 		range = 270;
+	// 900 for TMX Pro
 	else if (range > 900)
 		range = 900;
 
