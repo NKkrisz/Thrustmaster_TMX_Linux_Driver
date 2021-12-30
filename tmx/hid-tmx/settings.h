@@ -25,12 +25,12 @@ struct opertation42
 	operation_t	operation;
 };
 
-static int t150_settings_set40(struct t150 *t150, operation_t operation, 
+static int tmx_settings_set40(struct tmx *tmx, operation_t operation, 
 	uint16_t argument, void *buffer);
 
-static int t150_set_gain(struct t150 *t150, uint8_t gain);
-static __always_inline int t150_set_autocenter(struct t150 *t150, uint8_t autocenter_force);
-static __always_inline int t150_set_enable_autocenter(struct t150 *t150, bool enable);
-static __always_inline int t150_set_range(struct t150 *t150, uint16_t range);
+static int tmx_set_gain(struct tmx *tmx, uint8_t gain);
+static __always_inline int tmx_set_autocenter(struct tmx *tmx, uint8_t autocenter_force);
+static __always_inline int tmx_set_enable_autocenter(struct tmx *tmx, bool enable);
+static __always_inline int tmx_set_range(struct tmx *tmx, uint16_t range);
 
-static int t150_setup_task(struct t150 *t150);
+static int tmx_setup_task(struct tmx *tmx);
