@@ -9,23 +9,6 @@ then
 	exit 1
 fi
 
-echo "Please Select Your Wheel"
-echo "(1) T150"
-echo "(2) TMX"
-read sel
-
-case $sel in
-
-	1)
-		t150()
-	;;
-	2)
-		tmx()
-	;;
-	*)
-		echo "Input not valid. Please try again"
-	;;
-esac
 tmx()
 {
 	echo "==== REMOVING OLD VERSIONS ===="
@@ -104,3 +87,21 @@ t150()
 	cd ..
 }
 
+
+echo "Please Select Your Wheel"
+echo "(1) T150"
+echo "(2) TMX"
+read sel
+
+case $sel in
+
+	1)
+		t150
+	;;
+	2)
+		tmx
+	;;
+	*)
+		echo "Input not valid. Please try again"
+	;;
+esac
