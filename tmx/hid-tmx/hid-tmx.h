@@ -1,7 +1,7 @@
 #include <linux/mutex.h>
 
 #define USB_THRUSTMASTER_VENDOR_ID	0x044f
-#define USB_T150_PRODUCT_ID		0xb677
+#define USB_TMX_PRODUCT_ID		0xb677
 
 struct joy_state_packet;
 struct ff_first;
@@ -9,7 +9,7 @@ struct ff_second;
 struct ff_third;
 union ff_change;
 
-struct t150
+struct tmx
 {
 	struct usb_device *usb_device;
 	struct hid_device *hid_device;
@@ -66,7 +66,7 @@ static inline uint8_t word_low(const uint16_t word)
 static inline void printP(uint8_t const *const bytes, const size_t length)
 {
 	int i;
-	char printstr[202] = "t150: ";
+	char printstr[202] = "TMX: ";
 
 	if(length > 64) // Packet too big :/
 		return;

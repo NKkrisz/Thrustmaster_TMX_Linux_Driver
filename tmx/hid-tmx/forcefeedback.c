@@ -237,7 +237,7 @@ static void tmx_ff_prepare_commit(struct ff_commit *ff_commit, struct ff_effect 
 		ff_commit->effect_type = cpu_to_le16(TMX_FF_COMMIT_CODE_DAMPER);
 		break;
 	default:
-		printk(KERN_ERR "tmx: unknown effect type: %i\n", effect->type);
+		printk(KERN_ERR "TMX: unknown effect type: %i\n", effect->type);
 	}
 }
 

@@ -12,7 +12,7 @@
 #include <linux/spinlock.h>
 #include <linux/hid.h>
 
-#include "hid-t150.h"
+#include "hid-tmx.h"
 #include "input.h"
 #include "attributes.h"
 #include "settings.h"
@@ -21,22 +21,22 @@
 
 static void donothing_callback(struct urb *urb) {}
 
-/** Init for a t150 data struct
- * @param t150 pointer to the t150 structor to init
+/** Init for a tmx data struct
+ * @param tmx pointer to the tmx structor to init
  * @param interface pointer to usb interface which the wheel is connected to
  */
-static inline int t150_constructor(struct t150 *t150,struct hid_device *hid_device)
+static inline int tmx_constructor(struct tmx *tmx,struct hid_device *hid_device)
 {
 	int i, error_code = 0;
 	struct usb_endpoint_descriptor *ep, *ep_irq_in = 0, *ep_irq_out = 0;
 	struct usb_interface *interface = to_usb_interface(hid_device->dev.parent);
 
-	t150->usb_device = interface_to_usbdev(interface);
-	t150->hid_device = hid_device;
+	tmx->usb_device = interface_to_usbdev(interface);
+	tmx->hid_device = hid_device;
 
-	// Saving ref to t150
-	dev_set_drvdata(&t150->usb_device->dev, t150);
-	hid_set_drvdata(hid_device, t150);
+	// Saving ref to tmx
+	dev_set_drvdata(&tmx->usb_device->dev, tmx);
+	hid_set_drvdata(hid_device, tmx);
 
 	error_code = hid_parse(hid_device);
 	if (error_code) {
@@ -50,12 +50,12 @@ static inline int t150_constructor(struct t150 *t150,struct hid_device *hid_devi
 		return error_code;
 	}
 
-	mutex_init(&t150->lock);
-	spin_lock_init(&t150->settings.access_lock);
+	mutex_init(&tmx->lock);
+	spin_lock_init(&tmx->settings.access_lock);
 
 	// Path used for the input subsystem
-	usb_make_path(t150->usb_device, t150->dev_path, sizeof(t150->dev_path));
-	strlcat(t150->dev_path, "/input0", sizeof(t150->dev_path));
+	usb_make_path(tmx->usb_device, tmx->dev_path, sizeof(tmx->dev_path));
+	strlcat(tmx->dev_path, "/input0", sizeof(tmx->dev_path));
 
 	// From xpad.c
 	for (i = 0; i < 2; i++) {
@@ -73,74 +73,74 @@ static inline int t150_constructor(struct t150 *t150,struct hid_device *hid_devi
 		goto error3;
 	}
 
-	t150->pipe_in = usb_rcvintpipe(t150->usb_device, ep_irq_in->bEndpointAddress);
-	t150->pipe_out= usb_sndintpipe(t150->usb_device, ep_irq_out->bEndpointAddress);
+	tmx->pipe_in = usb_rcvintpipe(tmx->usb_device, ep_irq_in->bEndpointAddress);
+	tmx->pipe_out= usb_sndintpipe(tmx->usb_device, ep_irq_out->bEndpointAddress);
 
-	t150->bInterval_in = ep_irq_in->bInterval;
-	t150->bInterval_out = ep_irq_out->bInterval;
+	tmx->bInterval_in = ep_irq_in->bInterval;
+	tmx->bInterval_out = ep_irq_out->bInterval;
 
-	error_code = t150_init_input(t150);
+	error_code = tmx_init_input(tmx);
 	if(error_code)
 		goto error4;
 
-	error_code = t150_init_ffb(t150);
+	error_code = tmx_init_ffb(tmx);
 	if(error_code)
 		goto error5;
 	
-	error_code = t150_init_attributes(t150);
+	error_code = tmx_init_attributes(tmx);
 	if(error_code)
 		goto error6;
 
 	return 0;
 
-error6: t150_free_ffb(t150);
-error5: t150_free_input(t150);
+error6: tmx_free_ffb(tmx);
+error5: tmx_free_input(tmx);
 error4:	;
 error3: hid_hw_stop(hid_device);
 	return error_code;
 }
 
-static int t150_probe(struct hid_device *hid_device, const struct hid_device_id *id)
+static int tmx_probe(struct hid_device *hid_device, const struct hid_device_id *id)
 {
 	int error_code = 0;
-	struct t150 *t150;
+	struct tmx *tmx;
 
-	// Create new t150 struct
-	t150 = kzalloc(sizeof(struct t150), GFP_KERNEL);
-	if(!t150)
+	// Create new tmx struct
+	tmx = kzalloc(sizeof(struct tmx), GFP_KERNEL);
+	if(!tmx)
 		return -ENOMEM;
 
-	error_code = t150_constructor(t150, hid_device);
+	error_code = tmx_constructor(tmx, hid_device);
 	if(error_code)
 		goto error0;
 
 	return 0;
 
-error0: kfree(t150);
+error0: kfree(tmx);
 	return error_code;
 }
 
-static void t150_remove(struct hid_device *hid_device)
+static void tmx_remove(struct hid_device *hid_device)
 {
-	struct t150 *t150 = hid_get_drvdata(hid_device);;
+	struct tmx *tmx = hid_get_drvdata(hid_device);;
 
-	hid_info(t150->hid_device, "T150RS Wheel removed. Bye\n");
+	hid_info(tmx->hid_device, "TMX Wheel removed. Bye\n");
 
 	// Force feedback 
-	t150_free_ffb(t150);
+	tmx_free_ffb(tmx);
 
 	// input deregister
-	t150_free_input(t150);
+	tmx_free_input(tmx);
 
 	// sysf free
-	t150_free_attributes(t150);
+	tmx_free_attributes(tmx);
 
 	// Stop hid
 	hid_hw_close(hid_device);
 	hid_hw_stop(hid_device);
 
-	// t150 free
-	kfree(t150);
+	// tmx free
+	kfree(tmx);
 }
 
 #include "attributes.c"
@@ -154,23 +154,23 @@ static void t150_remove(struct hid_device *hid_device)
  *
  *******************************************************************/
 
-static struct hid_device_id t150_table[] =
+static struct hid_device_id tmx_table[] =
 {
-	{ HID_USB_DEVICE(USB_THRUSTMASTER_VENDOR_ID, USB_T150_PRODUCT_ID) },
+	{ HID_USB_DEVICE(USB_THRUSTMASTER_VENDOR_ID, USB_TMX_PRODUCT_ID) },
 	{} /* Terminating entry */
 };
-MODULE_DEVICE_TABLE (hid, t150_table);
+MODULE_DEVICE_TABLE (hid, tmx_table);
 
-static struct hid_driver t150_driver =
+static struct hid_driver tmx_driver =
 {
-	.name = "hid-t150",
-	.id_table = t150_table,
-	.probe = t150_probe,
-	.remove = t150_remove,
-	.raw_event = t150_update_input
+	.name = "hid-tmx",
+	.id_table = tmx_table,
+	.probe = tmx_probe,
+	.remove = tmx_remove,
+	.raw_event = tmx_update_input
 };
 
-static int __init t150_init(void)
+static int __init tmx_init(void)
 {
 	int errno = -ENOMEM;
 	packet_input_open = kzalloc(sizeof(uint16_t), GFP_KERNEL);
@@ -189,7 +189,7 @@ static int __init t150_init(void)
 	*packet_input_what = cpu_to_le16(0x0542);
 	*packet_input_close = cpu_to_le16(0x0042);
 
-	errno = hid_register_driver(&t150_driver);
+	errno = hid_register_driver(&tmx_driver);
 	if(errno)
 		goto err3;
 	else
@@ -201,19 +201,19 @@ err1:	kfree(packet_input_open);
 err0:	return errno;
 }
 
-static void __exit t150_exit(void)
+static void __exit tmx_exit(void)
 {
 	kfree(packet_input_open);
 	kfree(packet_input_what);
 	kfree(packet_input_close);
 
-	hid_unregister_driver(&t150_driver);
+	hid_unregister_driver(&tmx_driver);
 }
 
-module_init(t150_init);
-module_exit(t150_exit);
+module_init(tmx_init);
+module_exit(tmx_exit);
 
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Dario Pagani <>");
-MODULE_DESCRIPTION("ThrustMaster T150 steering wheel driver");
+MODULE_AUTHOR("Dario Pagani, Cat2048");
+MODULE_DESCRIPTION("ThrustMaster TMX steering wheel driver");
