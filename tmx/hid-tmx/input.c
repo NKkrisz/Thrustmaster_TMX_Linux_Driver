@@ -1,32 +1,32 @@
 /**
  * This function initializes the input system for
- * @t150 pointer to our device
+ * @tmx pointer to our device
  */
-static inline int t150_init_input(struct t150 *t150)
+static inline int tmx_init_input(struct tmx *tmx)
 {
-	struct hid_input *hidinput = list_entry(t150->hid_device->inputs.next, struct hid_input, list);
-	t150->joystick = hidinput->input;
+	struct hid_input *hidinput = list_entry(tmx->hid_device->inputs.next, struct hid_input, list);
+	tmx->joystick = hidinput->input;
 	
-	input_set_drvdata(t150->joystick, t150);
+	input_set_drvdata(tmx->joystick, tmx);
 
-	t150->joystick->open = t150_input_open;
-	t150->joystick->close = t150_input_close;
+	tmx->joystick->open = tmx_input_open;
+	tmx->joystick->close = tmx_input_close;
 
 	return 0;
 }
 
-static inline void t150_free_input(struct t150 *t150)
+static inline void tmx_free_input(struct tmx *tmx)
 {
 }
 
-static int t150_input_open(struct input_dev *dev)
+static int tmx_input_open(struct input_dev *dev)
 {
-	struct t150 *t150 = input_get_drvdata(dev);
+	struct tmx *tmx = input_get_drvdata(dev);
 	int boh, ret;
 
 	ret = usb_interrupt_msg(
-		t150->usb_device,
-		t150->pipe_out,
+		tmx->usb_device,
+		tmx->pipe_out,
 		packet_input_open, 2, &boh,
 		8
 	);
@@ -34,30 +34,30 @@ static int t150_input_open(struct input_dev *dev)
 	if(ret)
 		return ret;
 
-	ret = hid_hw_open(t150->hid_device);
+	ret = hid_hw_open(tmx->hid_device);
 
 	return ret;
 }
 
-static void t150_input_close(struct input_dev *dev)
+static void tmx_input_close(struct input_dev *dev)
 {
-	struct t150 *t150 = input_get_drvdata(dev);
+	struct tmx *tmx = input_get_drvdata(dev);
 	int boh, i;
 
-	hid_hw_close(t150->hid_device);
+	hid_hw_close(tmx->hid_device);
 
 	// Send magic codes
 	for(i = 0; i < 2; i++)
 		usb_interrupt_msg(
-			t150->usb_device,
-			t150->pipe_out,
+			tmx->usb_device,
+			tmx->pipe_out,
 			packet_input_what, 2, &boh,
 			8
 		);
 
 	usb_interrupt_msg(
-		t150->usb_device,
-		t150->pipe_out,
+		tmx->usb_device,
+		tmx->pipe_out,
 		packet_input_close, 2, &boh,
 		8
 	);
@@ -65,12 +65,12 @@ static void t150_input_close(struct input_dev *dev)
 
 /**
  * This function updates the current input status of the joystick
- * @t150 target wheel
+ * @tmx target wheel
  * @ss   new status to register
  */
-static int t150_update_input(struct hid_device *hdev, struct hid_report *report, uint8_t *packet_raw, int size)
+static int tmx_update_input(struct hid_device *hdev, struct hid_report *report, uint8_t *packet_raw, int size)
 {	
-	struct t150_state_packet *packet = (struct t150_state_packet*)packet_raw;
+	struct tmx_state_packet *packet = (struct tmx_state_packet*)packet_raw;
 
 	if(packet->type != STATE_PACKET_INPUT)
 	{
