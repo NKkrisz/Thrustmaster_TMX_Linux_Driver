@@ -43,7 +43,9 @@ tmx()
 
 	echo "==== LOADING NEW MODULES ===="
 	modprobe hid-tminit
+	echo "hid-tminit"
 	modprobe hid-tmx
+	echo "hid-tmx"
 
 	cd ..
 }
