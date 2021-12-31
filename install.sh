@@ -21,7 +21,7 @@ tmx()
 
 	echo "==== CONFIG DKMS ===="
 	cd tmx
-	#rm -rf /usr/src/tmx-*
+	rm -rf /usr/src/tmx-*
 	mkdir "/usr/src/tmx-$VERSION"
 	mkdir "/usr/src/tmx-$VERSION/build"
 
@@ -42,8 +42,8 @@ tmx()
 	udevadm trigger
 
 	echo "==== LOADING NEW MODULES ===="
-	modprobe hid-tminit
-	echo "hid-tminit"
+	#modprobe hid-tminit
+	echo "not loading hid-tminit"
 	modprobe hid-tmx
 	echo "hid-tmx"
 
@@ -62,7 +62,7 @@ t150()
 
 	echo "==== CONFIG DKMS ===="
 	cd t150
-	#rm -rf /usr/src/t150-*
+	rm -rf /usr/src/t150-*
 	mkdir "/usr/src/t150-$VERSION"
 	mkdir "/usr/src/t150-$VERSION/build"
 

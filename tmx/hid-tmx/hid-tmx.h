@@ -1,7 +1,7 @@
 #include <linux/mutex.h>
 
 #define USB_THRUSTMASTER_VENDOR_ID	0x044f
-#define USB_TMX_PRODUCT_ID		0xb67e
+#define USB_TMX_PRODUCT_ID		0xb67f
 
 struct joy_state_packet;
 struct ff_first;

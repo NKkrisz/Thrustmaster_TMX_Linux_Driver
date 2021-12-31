@@ -1,0 +1,5 @@
+# make the tmx appear like a joystick
+SUBSYSTEM=="usb", ATTRS{idVendor}=="044f", ATTRS{idProduct}=="b67e", MODE="0666", ENV{ID_INPUT_JOYSTICK}="1", GROUP="plugdev", TAG+="uaccess"
+
+# 'FFB Wheel'
+SUBSYSTEM=="usb", ATTRS{product}=="Thrustmaster FFB Wheel", ATTRS{idVendor}=="044f", ATTRS{idProduct}=="b65d", MODE="0666", ENV{ID_INPUT_JOYSTICK}="1", GROUP="plugdev", TAG+="uaccess"
