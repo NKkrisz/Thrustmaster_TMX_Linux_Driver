@@ -1,4 +1,8 @@
-# Not working or finished
+# Kinda working but not finished
+- To install, run this:
+ ```
+ sudo ./install.sh && python tmx/tmx_init.py
+ ```
 # Thrustmaster T150 Force Feedback Wheel Linux drivers
 **DISCLAMER**
 *This is not an official driver from Thrustmaster and is provided without any kind of warranty. Loading and using this driver is at your own risk; I don't take responsibility for kernel panics, devices bricked or any other kind of inconvenience*
