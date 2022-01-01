@@ -4,6 +4,7 @@ from os import path
 import time
 
 with usb1.USBContext() as context:
+    print("Initalizing")
 #   Prep for 1st write
     handle = context.openByVendorIDAndProductID(
         0x44f,
@@ -24,7 +25,6 @@ with usb1.USBContext() as context:
                 b''            
         )
     except:
-        print("Error (But it might be ok)")
         pass
     
     time.sleep(5)
@@ -49,5 +49,4 @@ with usb1.USBContext() as context:
                 b''        
         )
     except:
-        print("Error (But it might be ok)")
         pass
