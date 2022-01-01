@@ -2,6 +2,7 @@
 
 #INIT_DRIVER_REPO="https://github.com/scarburato/hid-tminit"
 INIT_DRIVER_REPO="https://github.com/gamingdoom/hid-tminit"
+INIT_DRIVER_BRANCH="tmx"
 
 VERSION=0.8a
 
@@ -29,7 +30,7 @@ tmx()
 
 	cp -R ./hid-tmx "/usr/src/tmx-$VERSION/hid-tmx"
 	mkdir "/usr/src/tmx-$VERSION/hid-tminit"
-	git clone $INIT_DRIVER_REPO "/usr/src/tmx-$VERSION/hid-tminit"
+	git clone $INIT_DRIVER_REPO -b $INIT_DRIVER_BRANCH "/usr/src/tmx-$VERSION/hid-tminit"
 	cp ./dkms_make.mak "/usr/src/tmx-$VERSION/Makefile"
 	cp ./dkms.conf "/usr/src/tmx-$VERSION/"
 
@@ -44,8 +45,8 @@ tmx()
 	udevadm trigger
 
 	echo "==== LOADING NEW MODULES ===="
-	#modprobe hid-tminit
-	#echo "hid-tminit"
+	modprobe hid-tminit
+	echo "hid-tminit"
 	modprobe hid-tmx
 	echo "hid-tmx"
 
@@ -70,7 +71,7 @@ t150()
 
 	cp -R ./hid-t150 "/usr/src/t150-$VERSION/hid-t150"
 	mkdir "/usr/src/t150-$VERSION/hid-tminit"
-	git clone $INIT_DRIVER_REPO "/usr/src/t150-$VERSION/hid-tminit"
+	git clone $INIT_DRIVER_REPO -b $INIT_DRIVER_BRANCH "/usr/src/t150-$VERSION/hid-tminit"
 	cp ./dkms_make.mak "/usr/src/t150-$VERSION/Makefile"
 	cp ./dkms.conf "/usr/src/t150-$VERSION/"
 
