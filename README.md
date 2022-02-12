@@ -1,4 +1,4 @@
-# Thrustmaster TMX Force Feedback Wheel Linux drivers
+# Thrustmaster TMX Force Feedback Wheel Linux drivers. Use python file in tmx folder to init the wheel
 **DISCLAMER**
 *This is not an official driver from Thrustmaster and is provided without any kind of warranty. Loading and using this driver is at your own risk; I don't take responsibility for kernel panics, devices bricked or any other kind of inconvenience*
 
